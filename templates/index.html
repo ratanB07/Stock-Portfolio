@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Portfolio Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f3f4f6;
+            --card-background: #ffffff;
+            --text-color: #1f2937;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-container {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .form-control {
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            color: #4b5563;
+        }
+
+        .stat-card p {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header">
+            <h1>Stock Portfolio Dashboard</h1>
+            <p>Analyze your stock portfolio using XGBoost prediction and visualize the returns.</p>
+        </div>
+
+        <div class="form-container">
+            <h2>Investment Details</h2>
+            <form method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="stock_symbols">Choose Stocks</label>
+                        <select name="stock_symbols" class="form-control" multiple>
+                            {% for stock in stocks %}
+                            <option value="{{ stock }}">{{ stock }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="investment_amount">Monthly Investment Amount (INR)</label>
+                        <input type="number" name="investment_amount" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="years">Investment Period (Years)</label>
+                        <input type="number" name="years" class="form-control" value="5" required>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Analyze Portfolio</button>
+            </form>
+        </div>
+
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+
+        {% if portfolio_results %}
+        <div class="stats-grid">
+            {% for stock, result in portfolio_results.items() %}
+            {% if stock != 'total' %}
+            <div class="stat-card">
+                <h3>{{ stock }}</h3>
+                <p>Final Value: {{ result.final_value }}</p>
+                <p>Investment: {{ result.investment }}</p>
+                <p>Profit: {{ result.profit }}</p>
+            </div>
+            {% endif %}
+            {% endfor %}
+            <div class="stat-card">
+                <h3>Total Portfolio</h3>
+                <p>Final Value: {{ portfolio_results.total.final_value }}</p>
+                <p>Investment: {{ portfolio_results.total.investment }}</p>
+                <p>Profit: {{ portfolio_results.total.profit }}</p>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <img src="data:image/png;base64,{{ chart }}" alt="Portfolio Growth Chart">
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
